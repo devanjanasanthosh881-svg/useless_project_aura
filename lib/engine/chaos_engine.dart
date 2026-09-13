@@ -1,76 +1,310 @@
-import 'dart:async';
 import 'dart:math';
+import 'dart:typed_data';
+
 import 'package:flutter/services.dart';
 import 'package:image/image.dart' as img;
 
 class ChaosEngine {
-  /// Main pipeline entry point to sabotage an input image asset
-  static Future<Uint8List> ruinImageFromAsset(String assetPath) async {
-    // 1. Load raw bytes from Flutter bundle
+  /// Main pipeline entry point.
+  ///
+  /// Asset
+  ///   ↓
+  /// Awkward crop
+  ///   ↓
+  /// Radioactive color distortion
+  ///   ↓
+  /// Strategic thumb
+  ///   ↓
+  /// 19° anti-level rotation
+  ///   ↓
+  /// Digital degradation
+  ///   ↓
+  /// JPEG
+  static Future<Uint8List> ruinImageFromAsset(
+    String assetPath,
+  ) async {
+    // ----------------------------------------------------------
+    // 1. LOAD IMAGE
+    // ----------------------------------------------------------
+
     final ByteData data = await rootBundle.load(assetPath);
+
     final Uint8List bytes = data.buffer.asUint8List();
 
-    // 2. Decode original image into pixel representation
-    img.Image? original = img.decodeImage(bytes);
-    if (original == null) throw Exception("Failed to decode image bytes.");
+    final img.Image? original = img.decodeImage(bytes);
 
-    // 3. Step 1: Programmatic Awkward Crop (Chop off heads/edges)
-    img.Image cropped = _applyAwkwardCrop(original);
+    if (original == null) {
+      throw Exception('Failed to decode image bytes.');
+    }
 
-    // 4. Step 2: Radioactive Color & Contrast Distortion
-    img.Image colorShifted = _applyRadioactiveFilter(cropped);
+    // ----------------------------------------------------------
+    // 2. AWKWARD CROP
+    // ----------------------------------------------------------
 
-    // 5. Step 3: Extreme Downsampling & Pixel Noise (JPEG Artifacting)
-    img.Image degraded = _applyDigitalDegradation(colorShifted);
+    img.Image processed = _applyAwkwardCrop(original);
 
-    // 6. Encode back to Uint8List JPEG with high compression
-    return Uint8List.fromList(img.encodeJpg(degraded, quality: 25));
+    // ----------------------------------------------------------
+    // 3. RADIOACTIVE COLOR FILTER
+    // ----------------------------------------------------------
+
+    processed = _applyRadioactiveFilter(processed);
+
+    // ----------------------------------------------------------
+    // 4. STRATEGIC THUMB
+    // ----------------------------------------------------------
+
+    processed = _applyStrategicThumb(processed);
+
+    // ----------------------------------------------------------
+    // 5. ANTI-LEVEL BURN-IN
+    // ----------------------------------------------------------
+
+    processed = _applyAntiLevelRotation(processed);
+
+    // ----------------------------------------------------------
+    // 6. DIGITAL DEGRADATION
+    // ----------------------------------------------------------
+
+    processed = _applyDigitalDegradation(processed);
+
+    // ----------------------------------------------------------
+    // 7. JPEG COMPRESSION
+    // ----------------------------------------------------------
+
+    return Uint8List.fromList(
+      img.encodeJpg(
+        processed,
+        quality: 25,
+      ),
+    );
   }
 
-  /// Crops 30% off the top and right to ruin subject framing
+  // ==========================================================
+  // STEP 1 — AWKWARD CROP
+  // ==========================================================
+
+  /// Removes approximately the top 30% of the photograph.
+  ///
+  /// This deliberately destroys headroom / framing.
   static img.Image _applyAwkwardCrop(img.Image input) {
-    final int targetWidth = (input.width * 0.70).toInt();
-    final int targetHeight = (input.height * 0.70).toInt();
-    final int startX = (input.width * 0.25).toInt();
-    final int startY = (input.height * 0.25).toInt();
+    final int startY = (input.height * 0.30).round();
+
+    final int targetHeight =
+        input.height - startY;
 
     return img.copyCrop(
       input,
-      x: startX,
+      x: 0,
       y: startY,
-      width: targetWidth,
+      width: input.width,
       height: targetHeight,
     );
   }
 
-  /// Oversaturates colors and forces harsh green/magenta tints
-  static img.Image _applyRadioactiveFilter(img.Image input) {
-    // Increase contrast heavily
+  // ==========================================================
+  // STEP 2 — RADIOACTIVE COLOR FILTER
+  // ==========================================================
+
+  /// Aggressively oversaturates the image and pushes the
+  /// white balance toward a disgusting green/yellow tone.
+  static img.Image _applyRadioactiveFilter(
+    img.Image input,
+  ) {
     img.Image processed = img.adjustColor(
       input,
       contrast: 2.2,
+
+      // Extremely high saturation.
       saturation: 3.5,
+
+      // Darker / harsher gamma.
       gamma: 0.6,
     );
 
-    // Invert pixels dynamically in high-brightness areas
+    // Green-yellow color contamination.
     for (final pixel in processed) {
-      if (pixel.r > 200) pixel.r = 255 - pixel.r;
-      if (pixel.g < 50) pixel.g = 220; // Force harsh neon tint
+      final int red = pixel.r.toInt();
+      final int green = pixel.g.toInt();
+      final int blue = pixel.b.toInt();
+
+      // Reduce blue.
+      final int newBlue =
+          max(0, blue - 25);
+
+      // Push green.
+      final int newGreen =
+          min(255, green + 35);
+
+      // Slight yellow/red contamination.
+      final int newRed =
+          min(255, red + 10);
+
+      pixel
+        ..r = newRed
+        ..g = newGreen
+        ..b = newBlue;
+    }
+
+    // Extra neon distortion.
+    for (final pixel in processed) {
+      if (pixel.r > 200) {
+        pixel.r = 255 - pixel.r;
+      }
+
+      if (pixel.g < 50) {
+        pixel.g = 220;
+      }
     }
 
     return processed;
   }
 
-  /// Downsamples resolution then forces low-res upscaling for pixelation
-  static img.Image _applyDigitalDegradation(img.Image input) {
-    // Shrink to tiny dimensions (e.g. 120px wide)
-    final img.Image tiny = img.copyResize(input, width: 120);
+  // ==========================================================
+  // STEP 3 — STRATEGIC THUMB
+  // ==========================================================
 
-    // Apply Gaussian Blur on tiny image to blur details
-    final img.Image blurred = img.gaussianBlur(tiny, radius: 2);
+  /// Creates a semi-transparent peach/brown oval over one
+  /// corner of the photograph.
+  ///
+  /// We generate it programmatically, so no thumb asset is
+  /// required.
+  static img.Image _applyStrategicThumb(
+    img.Image input,
+  ) {
+    final int centerX =
+        (input.width * 0.88).round();
 
-    // Scale back up to create blocky pixelation artifacts
-    return img.copyResize(blurred, width: 600);
+    final int centerY =
+        (input.height * 0.88).round();
+
+    final int radiusX =
+        (input.width * 0.24).round();
+
+    final int radiusY =
+        (input.height * 0.20).round();
+
+    for (
+      int y = centerY - radiusY;
+      y <= centerY + radiusY;
+      y++
+    ) {
+      for (
+        int x = centerX - radiusX;
+        x <= centerX + radiusX;
+        x++
+      ) {
+        // Ignore pixels outside image.
+        if (x < 0 ||
+            y < 0 ||
+            x >= input.width ||
+            y >= input.height) {
+          continue;
+        }
+
+        // Ellipse equation.
+        final double dx =
+            (x - centerX) / radiusX;
+
+        final double dy =
+            (y - centerY) / radiusY;
+
+        if ((dx * dx) + (dy * dy) <= 1) {
+          final img.Pixel pixel =
+              input.getPixel(x, y);
+
+          // Peach/brown "finger".
+          const int thumbR = 190;
+          const int thumbG = 125;
+          const int thumbB = 85;
+
+          // Semi-transparent blend.
+          const double alpha = 0.55;
+
+          pixel.r = _blend(
+            pixel.r.toInt(),
+            thumbR,
+            alpha,
+          );
+
+          pixel.g = _blend(
+            pixel.g.toInt(),
+            thumbG,
+            alpha,
+          );
+
+          pixel.b = _blend(
+            pixel.b.toInt(),
+            thumbB,
+            alpha,
+          );
+        }
+      }
+    }
+
+    return input;
+  }
+
+  // ==========================================================
+  // STEP 4 — ANTI-LEVEL ROTATION
+  // ==========================================================
+
+  /// Physically rotates the bitmap by 19°.
+  ///
+  /// The black background intentionally remains visible
+  /// around the rotated image.
+  static img.Image _applyAntiLevelRotation(
+  img.Image input,
+) {
+  return img.copyRotate(
+    input,
+    angle: 19,
+  );
+}
+
+  // ==========================================================
+  // STEP 5 — DIGITAL DEGRADATION
+  // ==========================================================
+
+  /// Creates an intentionally terrible low-resolution look.
+  static img.Image _applyDigitalDegradation(
+    img.Image input,
+  ) {
+    // Don't shrink very tiny images too aggressively.
+    final int tinyWidth =
+        min(120, input.width);
+
+    final img.Image tiny =
+        img.copyResize(
+      input,
+      width: tinyWidth,
+    );
+
+    // Blur away detail.
+    final img.Image blurred =
+        img.gaussianBlur(
+      tiny,
+      radius: 2,
+    );
+
+    // Stretch it back up.
+    return img.copyResize(
+      blurred,
+      width: 600,
+    );
+  }
+
+  // ==========================================================
+  // HELPER — ALPHA BLENDING
+  // ==========================================================
+
+  static int _blend(
+    int original,
+    int overlay,
+    double alpha,
+  ) {
+    return (
+      original * (1 - alpha) +
+      overlay * alpha
+    ).round().clamp(0, 255);
   }
 }
