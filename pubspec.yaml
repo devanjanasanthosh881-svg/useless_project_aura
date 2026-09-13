@@ -30,10 +30,13 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-
+image_picker: ^1.1.2     # For feeding emulator images cleanly
+image: ^4.2.0            # For processing & ruining images programmatically
+sensors_plus: ^5.0.1     # For accelerometer tilt chaos
+google_fonts: ^6.2.1
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
-  cupertino_icons: ^1.0.8
+cupertino_icons: ^1.0.8
 
 dev_dependencies:
   flutter_test:
@@ -59,7 +62,9 @@ flutter:
 
 
   assets:
-    - assets/
+    - assets/sample_face.jpg
+    - assets/sample_group.jpg
+    - assets/sample_landscape.jpg
   # To add assets to your application, add an assets section, like this:
   # assets:
   #   - images/a_dot_burr.jpeg
