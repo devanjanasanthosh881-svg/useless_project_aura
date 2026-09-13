@@ -4,7 +4,7 @@ Team Name: useless_project_aura
 Team Members
 Team Lead: Bisharath K N P - Mar Athanasius College of Engineering, Kothamangalam
 
-Member 2: Devanjana Santhosh - Mar Athanasius College of Engineering, Kothamangalam
+Member 2: Devanjana V S - Mar Athanasius College of Engineering, Kothamangalam
 
 Project Description
 Chaos-Cam is a Flutter-based mobile application disguised as a sleek "Pro Camera" that deliberately sabotages your photography with inverted gyroscope tilts, anti-autofocus reticles, severe image ruination, and live on-device LLM photo roasting.
@@ -51,6 +51,10 @@ Project Documentation
 For Software:
 
 Screenshots (Add at least 3)
+https://drive.google.com/file/d/1Gy2xuJojb6Tvba8S1m0J0OIHormJDuY2/view?usp=drivesdk
+https://drive.google.com/file/d/15wDgy-3a4P_Z57COltugaF6cr-yNWbZ7/view?usp=drivesdk
+https://drive.google.com/file/d/1NSndpURZb3FjNfuSANSQu10wl62qql0w/view?usp=drivesdk
+
 Dark mode Pro Viewfinder featuring simulated live RGB histogram, anti-autofocus reticle, and anti-scene optimizer status pill.
 
 Full-screen dramatic loader state locking screen interactions while dynamic sabotage prompts cycle.
@@ -62,15 +66,13 @@ App architecture showing parallel execution of Dart Image Processing Engine and 
 
 Project Demo
 Video
-[Link to Demo Video]
+https://drive.google.com/file/d/1Y3K89RZykpdYPJyOQ5Mi1g2hioVlqGuY/view?usp=drivesdk
 Demonstrates live tilt sabotage, interactive tap-to-blur autofocus evasion, shutter image processing pipeline, and live local LLM response inside the emulator.
 
-Additional Demos
-[Link to Presentation / Pitch Deck]
 
 Team Contributions
 Bisharath K N P: Developed Pro Mode UI screen (camera_screen.dart), Gyroscope Anti-Leveler (tilt_leveler.dart), Interactive Anti-Autofocus (pro_viewfinder.dart), and Local Ollama LLM service integration (llm_critic.dart).
 
-Devanjana Santhosh: Developed Dart Image Ruination Engine (chaos_engine.dart), Shutter State Machine overlay (chaos_loader.dart), and Result Modal dialog view (result_modal.dart).
+Devanjana V S: Developed Dart Image Ruination Engine (chaos_engine.dart), Shutter State Machine overlay (chaos_loader.dart), and Result Modal dialog view (result_modal.dart), Integration of real-time camera.
 
 Made with ❤️ at TinkerHub Useless Projects
