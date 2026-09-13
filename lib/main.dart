@@ -1,4 +1,4 @@
-import 'dart:typed_data';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'engine/chaos_engine.dart';
 import 'engine/llm_critic.dart';
@@ -36,35 +36,38 @@ class MainCameraWrapper extends StatefulWidget {
 class _MainCameraWrapperState extends State<MainCameraWrapper> {
   bool _isProcessing = false;
 
-  void _triggerShutterSequence() async {
-    // 1. Show Fake AI Loading Overlay
+  /// Parallelized shutter sequence for maximum performance & zero UI lag
+  void _triggerShutterSequence([
+    String selectedAssetPath = 'assets/sample_face.jpg',
+  ]) async {
+    // 1. Lock screen with Chaos loader overlay
     setState(() => _isProcessing = true);
 
     try {
-      // 2. Run real programmatic image ruination pipeline on preset sample
-      const sampleAsset = 'assets/sample_face.jpg';
-      final Uint8List ruinedBytes = await ChaosEngine.ruinImageFromAsset(
-        sampleAsset,
-      );
+      // 2. Execute Image Engine & LLM Call concurrently via Future.wait
+      final results = await Future.wait([
+        ChaosEngine.ruinImageFromAsset(selectedAssetPath),
+        LLMCritic.generatePhotoRoast(),
+      ]);
 
-      // 3. Generate Local LLM Roast (or fallback engine)
-      final String roastText = await LLMCritic.generateRoast(
-        presetName: "Preset #1",
-      );
+      final Uint8List ruinedBytes = results[0] as Uint8List;
+      final String aiRoast = results[1] as String;
 
       if (!mounted) return;
       setState(() => _isProcessing = false);
 
-      // 4. Display Final Ruined Photo Modal with real bytes & roast
+      // 3. Display Result Modal with Live Local LLM Roast
       showDialog(
         context: context,
         barrierDismissible: false,
         builder: (context) =>
-            ResultModal(imageBytes: ruinedBytes, roastMessage: roastText),
+            ResultModal(ruinedImageBytes: ruinedBytes, aiRoastText: aiRoast),
       );
     } catch (e) {
-      if (!mounted) return;
-      setState(() => _isProcessing = false);
+      if (mounted) {
+        setState(() => _isProcessing = false);
+      }
+      debugPrint("Shutter execution error: $e");
     }
   }
 
@@ -73,7 +76,10 @@ class _MainCameraWrapperState extends State<MainCameraWrapper> {
     return Stack(
       children: [
         // Viewfinder & Gyroscope Leveler Screen
-        CameraScreen(onShutterPressed: _triggerShutterSequence),
+        CameraScreen(
+          onShutterPressed: () =>
+              _triggerShutterSequence('assets/sample_face.jpg'),
+        ),
 
         // Processing Overlay
         if (_isProcessing) const ChaosLoaderOverlay(),

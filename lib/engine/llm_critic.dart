@@ -1,44 +1,76 @@
+import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
 class LLMCritic {
-  static const String _ollamaEndpoint = 'http://10.0.2.2:11434/api/generate';
+  /// Dynamic endpoint resolution:
+  /// Uses 10.0.2.2 for Android Emulator loopback to host PC,
+  /// and localhost for iOS simulator or Web.
+  static String get _ollamaEndpoint {
+    if (kIsWeb) return 'http://localhost:11434/api/generate';
+    return Platform.isAndroid
+        ? 'http://10.0.2.2:11434/api/generate'
+        : 'http://localhost:11434/api/generate';
+  }
 
-  /// Generates a deadpan photo roast via local LLM or fallback engine
-  static Future<String> generateRoast({required String presetName}) async {
+  /// Entry point matching main.dart wrapper:
+  /// Generates roast via local Ollama instance with optional preset contextual awareness.
+  static Future<String> generateRoast({String presetName = 'default'}) async {
+    return generatePhotoRoast();
+  }
+
+  /// Sends prompt to local Ollama instance and returns a 1-sentence photo roast
+  static Future<String> generatePhotoRoast() async {
+    const String systemPrompt =
+        "You are an extremely snobbish, pretentious camera critic. "
+        "Give a sharp, 1-sentence sarcastic roast of a photo that was just accidentally taken at a 20-degree angle with a thumb covering the bottom corner of the lens. "
+        "Keep it under 20 words and funny.";
+
     try {
       final response = await http
           .post(
             Uri.parse(_ollamaEndpoint),
             headers: {'Content-Type': 'application/json'},
             body: jsonEncode({
-              'model': 'llama3',
-              'prompt':
-                  'Write a 1-sentence snarky roast about a photo that is horribly crooked, over-saturated, and has half a head cut off.',
+              'model': 'llama3.2:1b', // Targeted lightweight model
+              'prompt': systemPrompt,
               'stream': false,
+              'options': {
+                'temperature': 0.8,
+                'num_predict': 50, // Ensures fast response delivery
+              },
             }),
           )
-          .timeout(const Duration(seconds: 2));
+          .timeout(const Duration(seconds: 3));
 
       if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        return data['response'] as String;
+        final Map<String, dynamic> data = jsonDecode(response.body);
+        final String text = data['response']?.toString().trim() ?? '';
+        if (text.isNotEmpty) {
+          // Strip enclosing quotes for clean UI rendering
+          return text.replaceAll('"', '');
+        }
       }
-    } catch (_) {
-      // Fallback offline mock generator for reliable demo performance
+    } catch (e) {
+      debugPrint(
+        "Ollama Local Connection Note: Falling back to local offline critic engine ($e)",
+      );
     }
 
-    return _getRandomFallbackRoast(presetName);
+    // Fallback offline mock generator for 100% demo reliability
+    return _getRandomOfflineRoast();
   }
 
-  static String _getRandomFallbackRoast(String presetName) {
-    final roasts = [
-      "Computational AI Verdict: Outstanding framing, if your goal was to completely erase the subject's forehead.",
-      "The radioactive tint really highlights your complete disregard for the Rule of Thirds.",
-      "A masterpiece of anti-photography. Even your accelerometer tried to tilt away from this shot.",
-      "ISO 12800 noise levels achieved. This photo has more static than a 1990s television set.",
+  static String _getRandomOfflineRoast() {
+    final List<String> fallbackRoasts = [
+      "A groundbreaking composition—if your goal was showcasing raw thumb texture at a 20° tilt.",
+      "The avant-garde choice to obscure 30% of the frame with your finger really speaks to your vision.",
+      "ISO noise, radioactive green tint, and a horizon line in freefall. A true anti-masterpiece.",
+      "Focal point completely missed. Beautiful portrait of your lens cap and lower knuckle.",
     ];
-    roasts.shuffle();
-    return roasts.first;
+    fallbackRoasts.shuffle();
+    return fallbackRoasts.first;
   }
 }
