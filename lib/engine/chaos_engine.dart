@@ -5,71 +5,114 @@ import 'package:flutter/services.dart';
 import 'package:image/image.dart' as img;
 
 class ChaosEngine {
-  /// Main pipeline entry point.
+  // ==========================================================
+  // CAMERA PHOTO PIPELINE
+  // ==========================================================
+
+  /// Ruins an actual camera photo.
   ///
-  /// Asset
+  /// Camera XFile
   ///   ↓
-  /// Awkward crop
+  /// Uint8List
   ///   ↓
-  /// Radioactive color distortion
+  /// Decode
   ///   ↓
-  /// Strategic thumb
+  /// Chaos pipeline
   ///   ↓
-  /// 19° anti-level rotation
-  ///   ↓
-  /// Digital degradation
-  ///   ↓
-  /// JPEG
-  static Future<Uint8List> ruinImageFromAsset(
-    String assetPath,
+  /// Ruined JPEG bytes
+  static Future<Uint8List> ruinImageBytes(
+    Uint8List bytes,
   ) async {
-    // ----------------------------------------------------------
-    // 1. LOAD IMAGE
-    // ----------------------------------------------------------
-
-    final ByteData data = await rootBundle.load(assetPath);
-
-    final Uint8List bytes = data.buffer.asUint8List();
-
     final img.Image? original = img.decodeImage(bytes);
 
     if (original == null) {
-      throw Exception('Failed to decode image bytes.');
+      throw Exception(
+        'Failed to decode camera image bytes.',
+      );
     }
 
-    // ----------------------------------------------------------
-    // 2. AWKWARD CROP
-    // ----------------------------------------------------------
+    return _ruinDecodedImage(original);
+  }
 
-    img.Image processed = _applyAwkwardCrop(original);
+  // ==========================================================
+  // ASSET PIPELINE
+  // ==========================================================
 
-    // ----------------------------------------------------------
-    // 3. RADIOACTIVE COLOR FILTER
-    // ----------------------------------------------------------
+  /// Keeps support for your preset/sample images.
+  ///
+  /// Asset
+  ///   ↓
+  /// Decode
+  ///   ↓
+  /// Chaos pipeline
+  ///   ↓
+  /// Ruined JPEG
+  static Future<Uint8List> ruinImageFromAsset(
+    String assetPath,
+  ) async {
+    final ByteData data =
+        await rootBundle.load(assetPath);
 
-    processed = _applyRadioactiveFilter(processed);
+    final Uint8List bytes =
+        data.buffer.asUint8List();
 
-    // ----------------------------------------------------------
-    // 4. STRATEGIC THUMB
-    // ----------------------------------------------------------
+    final img.Image? original =
+        img.decodeImage(bytes);
 
-    processed = _applyStrategicThumb(processed);
+    if (original == null) {
+      throw Exception(
+        'Failed to decode image bytes.',
+      );
+    }
 
-    // ----------------------------------------------------------
-    // 5. ANTI-LEVEL BURN-IN
-    // ----------------------------------------------------------
+    return _ruinDecodedImage(original);
+  }
 
-    processed = _applyAntiLevelRotation(processed);
+  // ==========================================================
+  // MAIN CHAOS PIPELINE
+  // ==========================================================
 
-    // ----------------------------------------------------------
-    // 6. DIGITAL DEGRADATION
-    // ----------------------------------------------------------
+  static Uint8List _ruinDecodedImage(
+    img.Image original,
+  ) {
+    // --------------------------------------------------------
+    // 1. AWKWARD CROP
+    // --------------------------------------------------------
 
-    processed = _applyDigitalDegradation(processed);
+    img.Image processed =
+        _applyAwkwardCrop(original);
 
-    // ----------------------------------------------------------
-    // 7. JPEG COMPRESSION
-    // ----------------------------------------------------------
+    // --------------------------------------------------------
+    // 2. RADIOACTIVE COLOR FILTER
+    // --------------------------------------------------------
+
+    processed =
+        _applyRadioactiveFilter(processed);
+
+    // --------------------------------------------------------
+    // 3. STRATEGIC THUMB
+    // --------------------------------------------------------
+
+    processed =
+        _applyStrategicThumb(processed);
+
+    // --------------------------------------------------------
+    // 4. 19° ANTI-LEVEL ROTATION
+    // --------------------------------------------------------
+
+    processed =
+        _applyAntiLevelRotation(processed);
+
+    // --------------------------------------------------------
+    // 5. DIGITAL DEGRADATION
+    // --------------------------------------------------------
+
+    processed =
+        _applyDigitalDegradation(processed);
+
+    // --------------------------------------------------------
+    // 6. JPEG COMPRESSION
+    // --------------------------------------------------------
 
     return Uint8List.fromList(
       img.encodeJpg(
@@ -85,9 +128,12 @@ class ChaosEngine {
 
   /// Removes approximately the top 30% of the photograph.
   ///
-  /// This deliberately destroys headroom / framing.
-  static img.Image _applyAwkwardCrop(img.Image input) {
-    final int startY = (input.height * 0.30).round();
+  /// Deliberately destroys headroom and framing.
+  static img.Image _applyAwkwardCrop(
+    img.Image input,
+  ) {
+    final int startY =
+        (input.height * 0.30).round();
 
     final int targetHeight =
         input.height - startY;
@@ -105,27 +151,29 @@ class ChaosEngine {
   // STEP 2 — RADIOACTIVE COLOR FILTER
   // ==========================================================
 
-  /// Aggressively oversaturates the image and pushes the
-  /// white balance toward a disgusting green/yellow tone.
+  /// Aggressively oversaturates the image and pushes
+  /// the white balance toward a disgusting green/yellow tone.
   static img.Image _applyRadioactiveFilter(
     img.Image input,
   ) {
-    img.Image processed = img.adjustColor(
+    img.Image processed =
+        img.adjustColor(
       input,
       contrast: 2.2,
-
-      // Extremely high saturation.
       saturation: 3.5,
-
-      // Darker / harsher gamma.
       gamma: 0.6,
     );
 
     // Green-yellow color contamination.
     for (final pixel in processed) {
-      final int red = pixel.r.toInt();
-      final int green = pixel.g.toInt();
-      final int blue = pixel.b.toInt();
+      final int red =
+          pixel.r.toInt();
+
+      final int green =
+          pixel.g.toInt();
+
+      final int blue =
+          pixel.b.toInt();
 
       // Reduce blue.
       final int newBlue =
@@ -163,11 +211,8 @@ class ChaosEngine {
   // STEP 3 — STRATEGIC THUMB
   // ==========================================================
 
-  /// Creates a semi-transparent peach/brown oval over one
-  /// corner of the photograph.
-  ///
-  /// We generate it programmatically, so no thumb asset is
-  /// required.
+  /// Creates a semi-transparent peach/brown oval
+  /// over one corner of the photograph.
   static img.Image _applyStrategicThumb(
     img.Image input,
   ) {
@@ -249,17 +294,14 @@ class ChaosEngine {
   // ==========================================================
 
   /// Physically rotates the bitmap by 19°.
-  ///
-  /// The black background intentionally remains visible
-  /// around the rotated image.
   static img.Image _applyAntiLevelRotation(
-  img.Image input,
-) {
-  return img.copyRotate(
-    input,
-    angle: 19,
-  );
-}
+    img.Image input,
+  ) {
+    return img.copyRotate(
+      input,
+      angle: 19,
+    );
+  }
 
   // ==========================================================
   // STEP 5 — DIGITAL DEGRADATION

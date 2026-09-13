@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:camera/camera.dart';
 import 'engine/chaos_engine.dart';
 import 'engine/llm_critic.dart';
 import 'ui/camera_screen.dart';
@@ -36,38 +37,47 @@ class MainCameraWrapper extends StatefulWidget {
 class _MainCameraWrapperState extends State<MainCameraWrapper> {
   bool _isProcessing = false;
 
-  void _triggerShutterSequence() async {
-    // 1. Show Fake AI Loading Overlay
-    setState(() => _isProcessing = true);
+  Future<void> _triggerShutterSequence(XFile photo) async {
+  // 1. Show fake AI processing overlay
+  setState(() => _isProcessing = true);
 
-    try {
-      // 2. Run real programmatic image ruination pipeline on preset sample
-      const sampleAsset = 'assets/sample_face.jpg';
-      final Uint8List ruinedBytes = await ChaosEngine.ruinImageFromAsset(
-        sampleAsset,
-      );
+  try {
+    // 2. Read the ACTUAL camera photo
+    final Uint8List photoBytes =
+        await photo.readAsBytes();
 
-      // 3. Generate Local LLM Roast (or fallback engine)
-      final String roastText = await LLMCritic.generateRoast(
-        presetName: "Preset #1",
-      );
+    // 3. Ruin the actual camera photo
+    final Uint8List ruinedBytes =
+        await ChaosEngine.ruinImageBytes(photoBytes);
 
-      if (!mounted) return;
-      setState(() => _isProcessing = false);
+    // 4. Generate LLM roast
+    final String roastText =
+        await LLMCritic.generateRoast(
+      presetName: "Camera Photo",
+    );
 
-      // 4. Display Final Ruined Photo Modal with real bytes & roast
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (context) =>
-            ResultModal(imageBytes: ruinedBytes, roastMessage: roastText),
-      );
-    } catch (e) {
-      if (!mounted) return;
-      setState(() => _isProcessing = false);
-    }
+    if (!mounted) return;
+
+    // 5. Hide loading overlay
+    setState(() => _isProcessing = false);
+
+    // 6. Show ruined photo
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => ResultModal(
+        imageBytes: ruinedBytes,
+        roastMessage: roastText,
+      ),
+    );
+  } catch (e) {
+    debugPrint('Chaos-Cam error: $e');
+
+    if (!mounted) return;
+
+    setState(() => _isProcessing = false);
   }
-
+}
   @override
   Widget build(BuildContext context) {
     return Stack(
