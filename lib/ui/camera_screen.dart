@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import '../widgets/tilt_leveler.dart';
 import '../widgets/pro_viewfinder.dart';
+import '../widgets/tilt_leveler.dart';
 
 class CameraScreen extends StatefulWidget {
   final Future<void> Function(XFile photo) onShutterPressed;
@@ -19,7 +19,6 @@ class CameraScreen extends StatefulWidget {
 
 class _CameraScreenState extends State<CameraScreen> {
   CameraController? _cameraController;
-
   bool _cameraReady = false;
   bool _isTakingPicture = false;
 
@@ -88,10 +87,6 @@ class _CameraScreenState extends State<CameraScreen> {
     }
   }
 
-  // ==========================================================
-  // TAKE REAL PHOTO
-  // ==========================================================
-
   Future<void> _takePicture() async {
     if (!_cameraReady ||
         _cameraController == null ||
@@ -104,8 +99,7 @@ class _CameraScreenState extends State<CameraScreen> {
         _isTakingPicture = true;
       });
 
-      final XFile photo =
-          await _cameraController!.takePicture();
+      final XFile photo = await _cameraController!.takePicture();
 
       if (!mounted) return;
 
@@ -169,26 +163,24 @@ class _CameraScreenState extends State<CameraScreen> {
             // --------------------------------------------------
             // TOP BAR
             // --------------------------------------------------
-
             Padding(
               padding: const EdgeInsets.symmetric(
-                vertical: 12.0,
+                vertical: 10.0,
                 horizontal: 16.0,
               ),
               child: Row(
-                mainAxisAlignment:
-                    MainAxisAlignment.spaceBetween,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Row(
                     children: [
                       const Icon(
-                        Icons.blur_on,
+                        Icons.warning_amber_rounded,
                         color: Colors.redAccent,
-                        size: 18,
+                        size: 16,
                       ),
                       const SizedBox(width: 6),
                       Text(
-                        "ANTI-COMPUTATIONAL AI",
+                        "ANTI-SCENE OPTIMIZER",
                         style: GoogleFonts.orbitron(
                           color: Colors.redAccent,
                           fontSize: 11,
@@ -203,19 +195,16 @@ class _CameraScreenState extends State<CameraScreen> {
                       vertical: 4,
                     ),
                     decoration: BoxDecoration(
-                      color:
-                          Colors.redAccent.withOpacity(0.15),
-                      borderRadius:
-                          BorderRadius.circular(12),
+                      color: Colors.cyanAccent.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(12),
                       border: Border.all(
-                        color:
-                            Colors.redAccent.withOpacity(0.5),
+                        color: Colors.cyanAccent.withValues(alpha: 0.4),
                       ),
                     ),
                     child: Text(
-                      "CHAOS v3.0",
+                      "CHAOS AI v3.0",
                       style: GoogleFonts.shareTechMono(
-                        color: Colors.redAccent,
+                        color: Colors.cyanAccent,
                         fontSize: 10,
                       ),
                     ),
@@ -227,15 +216,13 @@ class _CameraScreenState extends State<CameraScreen> {
             // --------------------------------------------------
             // CAMERA VIEWPORT
             // --------------------------------------------------
-
             Expanded(
               child: Padding(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 12.0,
                 ),
                 child: ClipRRect(
-                  borderRadius:
-                      BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(16),
                   child: Stack(
                     children: [
                       // Real camera preview + gyroscope effect
@@ -247,17 +234,16 @@ class _CameraScreenState extends State<CameraScreen> {
                         ),
                       ),
 
-                      // Viewfinder overlay
+                      // Pro Viewfinder overlay
                       const ProViewfinderOverlay(),
 
-                      // Camera loading indicator
+                      // Camera loading indicator overlay
                       if (!_cameraReady)
                         Container(
                           color: Colors.black54,
                           child: Center(
                             child: Column(
-                              mainAxisSize:
-                                  MainAxisSize.min,
+                              mainAxisSize: MainAxisSize.min,
                               children: [
                                 const CircularProgressIndicator(
                                   color: Colors.redAccent,
@@ -265,8 +251,7 @@ class _CameraScreenState extends State<CameraScreen> {
                                 const SizedBox(height: 12),
                                 Text(
                                   "INITIALIZING CHAOS CAMERA...",
-                                  style:
-                                      GoogleFonts.shareTechMono(
+                                  style: GoogleFonts.shareTechMono(
                                     color: Colors.redAccent,
                                     fontSize: 11,
                                   ),
@@ -282,25 +267,17 @@ class _CameraScreenState extends State<CameraScreen> {
             ),
 
             // --------------------------------------------------
-            // PRESET SELECTOR
+            // PRESET SELECTOR (DEMO / MOCK SELECTOR)
             // --------------------------------------------------
-            //
-            // Kept as a backup/demo selector.
-            // The real camera is now the main preview.
-            //
-
             Container(
               height: 45,
-              margin:
-                  const EdgeInsets.symmetric(vertical: 12),
+              margin: const EdgeInsets.symmetric(vertical: 10),
               child: ListView.builder(
                 scrollDirection: Axis.horizontal,
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16),
+                padding: const EdgeInsets.symmetric(horizontal: 16),
                 itemCount: _sampleAssets.length,
                 itemBuilder: (context, index) {
-                  final bool isSelected =
-                      index == _selectedSampleIndex;
+                  final bool isSelected = index == _selectedSampleIndex;
 
                   return GestureDetector(
                     onTap: () {
@@ -309,34 +286,26 @@ class _CameraScreenState extends State<CameraScreen> {
                       });
                     },
                     child: Container(
-                      margin:
-                          const EdgeInsets.only(right: 8),
-                      padding:
-                          const EdgeInsets.symmetric(
+                      margin: const EdgeInsets.only(right: 8),
+                      padding: const EdgeInsets.symmetric(
                         horizontal: 12,
-                        vertical: 6,
+                        vertical: 4,
                       ),
                       decoration: BoxDecoration(
                         color: isSelected
-                            ? Colors.white24
+                            ? Colors.redAccent.withValues(alpha: 0.2)
                             : Colors.transparent,
-                        borderRadius:
-                            BorderRadius.circular(8),
+                        borderRadius: BorderRadius.circular(8),
                         border: Border.all(
-                          color: isSelected
-                              ? Colors.white
-                              : Colors.white24,
+                          color: isSelected ? Colors.redAccent : Colors.white24,
                         ),
                       ),
                       child: Center(
                         child: Text(
                           "Preset #${index + 1}",
-                          style:
-                              GoogleFonts.shareTechMono(
-                            color: isSelected
-                                ? Colors.white
-                                : Colors.white60,
-                            fontSize: 12,
+                          style: GoogleFonts.shareTechMono(
+                            color: isSelected ? Colors.redAccent : Colors.white60,
+                            fontSize: 11,
                           ),
                         ),
                       ),
@@ -347,45 +316,28 @@ class _CameraScreenState extends State<CameraScreen> {
             ),
 
             // --------------------------------------------------
-            // BOTTOM CONTROLS
+            // BOTTOM SHUTTER CONTROLS
             // --------------------------------------------------
-
             Padding(
               padding: const EdgeInsets.only(
-                bottom: 24.0,
+                bottom: 20.0,
                 left: 24.0,
                 right: 24.0,
               ),
               child: Row(
-                mainAxisAlignment:
-                    MainAxisAlignment.spaceEvenly,
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
-                  // Flash
-                  IconButton(
-                    icon: const Icon(
-                      Icons.flash_off,
-                      color: Colors.white60,
-                    ),
-                    onPressed: () {},
-                  ),
+                  const Icon(Icons.hdr_off, color: Colors.cyanAccent),
 
-                  // SHUTTER
+                  // SHUTTER BUTTON
                   GestureDetector(
-                    onTap:
-                        (_cameraReady && !_isTakingPicture)
-                            ? _takePicture
-                            : null,
+                    onTap: (_cameraReady && !_isTakingPicture) ? _takePicture : null,
                     child: Opacity(
-                      opacity:
-                          (_cameraReady &&
-                                  !_isTakingPicture)
-                              ? 1.0
-                              : 0.4,
+                      opacity: (_cameraReady && !_isTakingPicture) ? 1.0 : 0.4,
                       child: Container(
                         width: 76,
                         height: 76,
-                        padding:
-                            const EdgeInsets.all(4),
+                        padding: const EdgeInsets.all(4),
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
                           border: Border.all(
@@ -394,8 +346,7 @@ class _CameraScreenState extends State<CameraScreen> {
                           ),
                         ),
                         child: Container(
-                          decoration:
-                              const BoxDecoration(
+                          decoration: const BoxDecoration(
                             color: Colors.redAccent,
                             shape: BoxShape.circle,
                           ),
@@ -411,14 +362,7 @@ class _CameraScreenState extends State<CameraScreen> {
                     ),
                   ),
 
-                  // Camera switch
-                  IconButton(
-                    icon: const Icon(
-                      Icons.cameraswitch,
-                      color: Colors.white60,
-                    ),
-                    onPressed: () {},
-                  ),
+                  const Icon(Icons.raw_on, color: Colors.redAccent),
                 ],
               ),
             ),

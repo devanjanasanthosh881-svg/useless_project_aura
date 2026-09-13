@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -10,21 +12,28 @@ class ProViewfinderOverlay extends StatefulWidget {
 
 class _ProViewfinderOverlayState extends State<ProViewfinderOverlay> {
   Offset _focusPoint = const Offset(0.5, 0.5);
-  bool _isFocusing = false;
+  bool _isBlurring = false;
+  double _isoValue = 12800;
+  double _shutterValue = 4000;
 
   void _handleTapToFocus(TapDownDetails details, BoxConstraints constraints) {
-    // Anti-Autofocus logic: tap near center -> shifts focus target to far corner
-    final tapX = details.localPosition.dx / constraints.maxWidth;
-    final tapY = details.localPosition.dy / constraints.maxHeight;
+    final double tapX = details.localPosition.dx / constraints.maxWidth;
+    final double tapY = details.localPosition.dy / constraints.maxHeight;
+
+    final double targetX = tapX > 0.5 ? 0.08 : 0.88;
+    final double targetY = tapY > 0.5 ? 0.08 : 0.88;
 
     setState(() {
-      _isFocusing = true;
-      // Invert tap target to sabotage focal point
-      _focusPoint = Offset(1.0 - tapX, 1.0 - tapY);
+      _isBlurring = true;
+      _focusPoint = Offset(targetX, targetY);
     });
 
-    Future.delayed(const Duration(milliseconds: 800), () {
-      if (mounted) setState(() => _isFocusing = false);
+    Future.delayed(const Duration(milliseconds: 650), () {
+      if (mounted) {
+        setState(() {
+          _isBlurring = false;
+        });
+      }
     });
   }
 
@@ -36,7 +45,18 @@ class _ProViewfinderOverlayState extends State<ProViewfinderOverlay> {
           onTapDown: (details) => _handleTapToFocus(details, constraints),
           child: Stack(
             children: [
-              // 1. Rule of Thirds Grid Lines (Fixed BoxDecoration)
+              // Tap Blur Flash
+              if (_isBlurring)
+                Positioned.fill(
+                  child: BackdropFilter(
+                    filter: ImageFilter.blur(sigmaX: 8.0, sigmaY: 8.0),
+                    child: Container(
+                      color: Colors.cyanAccent.withValues(alpha: 0.1),
+                    ),
+                  ),
+                ),
+
+              // Rule-of-Thirds Grid Lines
               Column(
                 children: [
                   Expanded(
@@ -44,7 +64,7 @@ class _ProViewfinderOverlayState extends State<ProViewfinderOverlay> {
                       decoration: BoxDecoration(
                         border: Border(
                           bottom: BorderSide(
-                            color: Colors.white.withValues(alpha: 0.2),
+                            color: Colors.cyanAccent.withValues(alpha: 0.3),
                             width: 0.5,
                           ),
                         ),
@@ -56,7 +76,7 @@ class _ProViewfinderOverlayState extends State<ProViewfinderOverlay> {
                       decoration: BoxDecoration(
                         border: Border(
                           bottom: BorderSide(
-                            color: Colors.white.withValues(alpha: 0.2),
+                            color: Colors.cyanAccent.withValues(alpha: 0.3),
                             width: 0.5,
                           ),
                         ),
@@ -73,7 +93,7 @@ class _ProViewfinderOverlayState extends State<ProViewfinderOverlay> {
                       decoration: BoxDecoration(
                         border: Border(
                           right: BorderSide(
-                            color: Colors.white.withValues(alpha: 0.2),
+                            color: Colors.cyanAccent.withValues(alpha: 0.3),
                             width: 0.5,
                           ),
                         ),
@@ -85,7 +105,7 @@ class _ProViewfinderOverlayState extends State<ProViewfinderOverlay> {
                       decoration: BoxDecoration(
                         border: Border(
                           right: BorderSide(
-                            color: Colors.white.withValues(alpha: 0.2),
+                            color: Colors.cyanAccent.withValues(alpha: 0.3),
                             width: 0.5,
                           ),
                         ),
@@ -96,18 +116,18 @@ class _ProViewfinderOverlayState extends State<ProViewfinderOverlay> {
                 ],
               ),
 
-              // 2. Anti-Autofocus Reticle
+              // Anti-Autofocus Reticle
               AnimatedPositioned(
-                duration: const Duration(milliseconds: 300),
+                duration: const Duration(milliseconds: 350),
+                curve: Curves.bounceOut,
                 left: _focusPoint.dx * (constraints.maxWidth - 60),
                 top: _focusPoint.dy * (constraints.maxHeight - 60),
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  width: _isFocusing ? 75 : 60,
-                  height: _isFocusing ? 75 : 60,
+                child: Container(
+                  width: 60,
+                  height: 60,
                   decoration: BoxDecoration(
                     border: Border.all(
-                      color: _isFocusing ? Colors.redAccent : Colors.yellow,
+                      color: _isBlurring ? Colors.redAccent : Colors.cyanAccent,
                       width: 1.5,
                     ),
                   ),
@@ -115,39 +135,100 @@ class _ProViewfinderOverlayState extends State<ProViewfinderOverlay> {
                     child: Container(
                       width: 4,
                       height: 4,
-                      color: _isFocusing ? Colors.redAccent : Colors.yellow,
+                      color: _isBlurring ? Colors.redAccent : Colors.cyanAccent,
                     ),
                   ),
                 ),
               ),
 
-              // 3. Pro Mode Metadata Display
+              // Metadata Display
               Positioned(
-                top: 16,
-                left: 16,
+                top: 14,
+                left: 14,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      "ISO 12800 (NOISY)",
-                      style: GoogleFonts.shareTechMono(
-                        color: Colors.yellow,
-                        fontSize: 12,
-                      ),
-                    ),
-                    Text(
-                      "RAW 14-BIT • f/1.4",
-                      style: GoogleFonts.shareTechMono(
-                        color: Colors.white70,
-                        fontSize: 12,
-                      ),
-                    ),
-                    Text(
-                      "ANTI-STABILIZATION: ACTIVE",
+                      "ISO ${_isoValue.toInt()} (CLIP)",
                       style: GoogleFonts.shareTechMono(
                         color: Colors.redAccent,
                         fontSize: 11,
-                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Text(
+                      "1/${_shutterValue.toInt()}s • f/1.2",
+                      style: GoogleFonts.shareTechMono(
+                        color: Colors.cyanAccent,
+                        fontSize: 11,
+                      ),
+                    ),
+                    Text(
+                      "ANTI-STABILIZER: LIVE",
+                      style: GoogleFonts.shareTechMono(
+                        color: Colors.white70,
+                        fontSize: 10,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              // Simulated Histogram Display
+              Positioned(
+                bottom: 60,
+                right: 14,
+                child: Container(
+                  width: 110,
+                  height: 45,
+                  padding: const EdgeInsets.all(4),
+                  decoration: BoxDecoration(
+                    color: Colors.black54,
+                    border: Border.all(color: Colors.white24, width: 0.8),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: CustomPaint(painter: HistogramPainter()),
+                ),
+              ),
+
+              // Controls Sliders
+              Positioned(
+                bottom: 10,
+                left: 14,
+                right: 14,
+                child: Row(
+                  children: [
+                    Text(
+                      "ISO",
+                      style: GoogleFonts.shareTechMono(
+                        color: Colors.redAccent,
+                        fontSize: 10,
+                      ),
+                    ),
+                    Expanded(
+                      child: Slider(
+                        value: _isoValue,
+                        min: 100,
+                        max: 25600,
+                        activeColor: Colors.redAccent,
+                        inactiveColor: Colors.white12,
+                        onChanged: (v) => setState(() => _isoValue = v),
+                      ),
+                    ),
+                    Text(
+                      "S",
+                      style: GoogleFonts.shareTechMono(
+                        color: Colors.cyanAccent,
+                        fontSize: 10,
+                      ),
+                    ),
+                    Expanded(
+                      child: Slider(
+                        value: _shutterValue,
+                        min: 60,
+                        max: 8000,
+                        activeColor: Colors.cyanAccent,
+                        inactiveColor: Colors.white12,
+                        onChanged: (v) => setState(() => _shutterValue = v),
                       ),
                     ),
                   ],
@@ -159,4 +240,33 @@ class _ProViewfinderOverlayState extends State<ProViewfinderOverlay> {
       },
     );
   }
+}
+
+class HistogramPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final Paint paintRed = Paint()
+      ..color = Colors.redAccent.withValues(alpha: 0.7);
+    final Paint paintCyan = Paint()
+      ..color = Colors.cyanAccent.withValues(alpha: 0.7);
+
+    final Path pathRed = Path()..moveTo(0, size.height);
+    final Path pathCyan = Path()..moveTo(0, size.height);
+
+    for (double x = 0; x <= size.width; x += 5) {
+      double yRed = size.height - (math.sin(x * 0.1) * 12 + 15);
+      double yCyan = size.height - (math.cos(x * 0.12) * 14 + 18);
+      pathRed.lineTo(x, yRed);
+      pathCyan.lineTo(x, yCyan);
+    }
+
+    pathRed.lineTo(size.width, size.height);
+    pathCyan.lineTo(size.width, size.height);
+
+    canvas.drawPath(pathRed, paintRed);
+    canvas.drawPath(pathCyan, paintCyan);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
 }

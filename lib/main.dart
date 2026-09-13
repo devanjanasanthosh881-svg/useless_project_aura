@@ -1,4 +1,4 @@
-import 'dart:typed_data';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
 import 'engine/chaos_engine.dart';
@@ -38,54 +38,52 @@ class _MainCameraWrapperState extends State<MainCameraWrapper> {
   bool _isProcessing = false;
 
   Future<void> _triggerShutterSequence(XFile photo) async {
-  // 1. Show fake AI processing overlay
-  setState(() => _isProcessing = true);
+    // 1. Show fake AI processing overlay
+    setState(() => _isProcessing = true);
 
-  try {
-    // 2. Read the ACTUAL camera photo
-    final Uint8List photoBytes =
-        await photo.readAsBytes();
+    try {
+      // 2. Read the ACTUAL camera photo bytes
+      final Uint8List photoBytes = await photo.readAsBytes();
 
-    // 3. Ruin the actual camera photo
-    final Uint8List ruinedBytes =
-        await ChaosEngine.ruinImageBytes(photoBytes);
+      // 3. Run Chaos Engine and LLM Critic concurrently to save execution time
+      final results = await Future.wait([
+        ChaosEngine.ruinImageBytes(photoBytes),
+        LLMCritic.generatePhotoRoast()
+      ]);
 
-    // 4. Generate LLM roast
-    final String roastText =
-        await LLMCritic.generateRoast(
-      presetName: "Camera Photo",
-    );
+      final Uint8List ruinedBytes = results[0] as Uint8List;
+      final String aiRoast = results[1] as String;
 
-    if (!mounted) return;
+      if (!mounted) return;
 
-    // 5. Hide loading overlay
-    setState(() => _isProcessing = false);
+      // 4. Hide loading overlay
+      setState(() => _isProcessing = false);
 
-    // 6. Show ruined photo
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => ResultModal(
-        imageBytes: ruinedBytes,
-        roastMessage: roastText,
-      ),
-    );
-  } catch (e) {
-    debugPrint('Chaos-Cam error: $e');
+      // 5. Show ruined photo result modal
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => ResultModal(
+          ruinedImageBytes: ruinedBytes,
+          aiRoastText: aiRoast,
+        ),
+      );
+    } catch (e) {
+      debugPrint('Shutter execution error: $e');
 
-    if (!mounted) return;
-
-    setState(() => _isProcessing = false);
+      if (mounted) {
+        setState(() => _isProcessing = false);
+      }
+    }
   }
-}
+
   @override
   Widget build(BuildContext context) {
     return Stack(
       children: [
-        // Viewfinder & Gyroscope Leveler Screen
-        CameraScreen(onShutterPressed: _triggerShutterSequence),
-
-        // Processing Overlay
+        CameraScreen(
+          onShutterPressed: _triggerShutterSequence,
+        ),
         if (_isProcessing) const ChaosLoaderOverlay(),
       ],
     );
