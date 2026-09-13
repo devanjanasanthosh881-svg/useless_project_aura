@@ -1,85 +1,103 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'dart:typed_data';
-import '../engine/llm_critic.dart';
+import 'package:google_fonts/google_fonts.dart';
 
-class ResultModal extends StatefulWidget {
+class ResultModal extends StatelessWidget {
   final Uint8List imageBytes;
-  const ResultModal({super.key, required this.imageBytes});
+  final String roastMessage;
 
-  @override
-  State<ResultModal> createState() => _ResultModalState();
-}
-
-class _ResultModalState extends State<ResultModal> {
-  String _roastText = "Consulting local AI critic...";
-
-  @override
-  void initState() {
-    super.initState();
-    _fetchRoast();
-  }
-
-  Future<void> _fetchRoast() async {
-    final roast = await LlmCritic.generateRoast();
-    if (mounted) setState(() => _roastText = roast);
-  }
+  const ResultModal({
+    super.key,
+    required this.imageBytes,
+    required this.roastMessage,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(24),
-      height: MediaQuery.of(context).size.height * 0.85,
-      decoration: const BoxDecoration(
-        color: Color(0xFF121212),
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+    return Dialog(
+      backgroundColor: const Color(0xFF141414),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+        side: const BorderSide(color: Colors.redAccent, width: 1.5),
       ),
-      child: Column(
-        children: [
-          const Text("CHAOS CAPTURE RESULT", style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold, fontSize: 18)),
-          const SizedBox(height: 16),
-          Expanded(
-            child: ClipRRect(
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Header Title
+            Row(
+              children: [
+                const Icon(
+                  Icons.warning_amber_rounded,
+                  color: Colors.redAccent,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  "SUCCESSFULLY SABOTAGED",
+                  style: GoogleFonts.orbitron(
+                    color: Colors.redAccent,
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+
+            // Processed Ruined Image Render
+            ClipRRect(
               borderRadius: BorderRadius.circular(12),
-              child: Image.memory(widget.imageBytes, fit: BoxFit.contain),
-            ),
-          ),
-          const SizedBox(height: 16),
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: Colors.black45,
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: Colors.redAccent.withOpacity(0.3)),
-            ),
-            child: Text(
-              _roastText,
-              style: const TextStyle(color: Colors.white70, fontStyle: FontStyle.italic, fontSize: 13),
-              textAlign: TextAlign.center,
-            ),
-          ),
-          const SizedBox(height: 20),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              ElevatedButton.icon(
-                style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent, foregroundColor: Colors.white),
-                icon: const Icon(Icons.delete_forever),
-                label: const Text("Incinerate"),
-                onPressed: () => Navigator.pop(context),
+              child: Image.memory(
+                imageBytes,
+                height: 260,
+                width: double.infinity,
+                fit: BoxFit.cover,
               ),
-              OutlinedButton.icon(
-                style: OutlinedButton.styleFrom(foregroundColor: Colors.white70),
-                icon: const Icon(Icons.share),
-                label: const Text("Export Proof"),
-                onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text("Error 404: File too shameful to share.")),
-                  );
-                },
+            ),
+            const SizedBox(height: 12),
+
+            // AI Roast Box
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.black45,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.white12),
               ),
-            ],
-          )
-        ],
+              child: Text(
+                "\"$roastMessage\"",
+                style: GoogleFonts.shareTechMono(
+                  color: Colors.yellow,
+                  fontSize: 12,
+                  fontStyle: FontStyle.italic,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            // Action Buttons
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.redAccent,
+                minimumSize: const Size(double.infinity, 44),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              onPressed: () => Navigator.pop(context),
+              child: Text(
+                "DISCARD & RUIN ANOTHER",
+                style: GoogleFonts.orbitron(
+                  color: Colors.white,
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
