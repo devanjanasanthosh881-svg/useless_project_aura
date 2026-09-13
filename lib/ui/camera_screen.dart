@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../widgets/tilt_leveler.dart';
 import '../widgets/pro_viewfinder.dart';
+import '../widgets/tilt_leveler.dart';
 
 class CameraScreen extends StatefulWidget {
   final VoidCallback onShutterPressed;
@@ -27,7 +27,7 @@ class _CameraScreenState extends State<CameraScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            // Task A1: Status Pill Header
+            // Status Pill Header
             Padding(
               padding: const EdgeInsets.symmetric(
                 vertical: 10.0,
@@ -78,7 +78,7 @@ class _CameraScreenState extends State<CameraScreen> {
               ),
             ),
 
-            // Task A1 & Task A2: Main Viewport (Gyro Leveler + Viewfinder)
+            // Main Viewport (Gyro Leveler + Viewfinder)
             Expanded(
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 12.0),

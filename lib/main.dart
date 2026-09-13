@@ -36,15 +36,12 @@ class MainCameraWrapper extends StatefulWidget {
 class _MainCameraWrapperState extends State<MainCameraWrapper> {
   bool _isProcessing = false;
 
-  /// Parallelized shutter sequence for maximum performance & zero UI lag
   void _triggerShutterSequence([
     String selectedAssetPath = 'assets/sample_face.jpg',
   ]) async {
-    // 1. Lock screen with Chaos loader overlay
     setState(() => _isProcessing = true);
 
     try {
-      // 2. Execute Image Engine & LLM Call concurrently via Future.wait
       final results = await Future.wait([
         ChaosEngine.ruinImageFromAsset(selectedAssetPath),
         LLMCritic.generatePhotoRoast(),
@@ -56,7 +53,6 @@ class _MainCameraWrapperState extends State<MainCameraWrapper> {
       if (!mounted) return;
       setState(() => _isProcessing = false);
 
-      // 3. Display Result Modal with Live Local LLM Roast
       showDialog(
         context: context,
         barrierDismissible: false,
@@ -75,13 +71,10 @@ class _MainCameraWrapperState extends State<MainCameraWrapper> {
   Widget build(BuildContext context) {
     return Stack(
       children: [
-        // Viewfinder & Gyroscope Leveler Screen
         CameraScreen(
           onShutterPressed: () =>
               _triggerShutterSequence('assets/sample_face.jpg'),
         ),
-
-        // Processing Overlay
         if (_isProcessing) const ChaosLoaderOverlay(),
       ],
     );

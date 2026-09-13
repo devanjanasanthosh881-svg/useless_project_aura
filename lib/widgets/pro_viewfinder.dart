@@ -16,12 +16,10 @@ class _ProViewfinderOverlayState extends State<ProViewfinderOverlay> {
   double _isoValue = 12800;
   double _shutterValue = 4000;
 
-  // Task A3: Tap to focus logic -> flashes blur and jumps reticle to arbitrary corner
   void _handleTapToFocus(TapDownDetails details, BoxConstraints constraints) {
     final double tapX = details.localPosition.dx / constraints.maxWidth;
     final double tapY = details.localPosition.dy / constraints.maxHeight;
 
-    // Determine target corner farthest from tap
     final double targetX = tapX > 0.5 ? 0.08 : 0.88;
     final double targetY = tapY > 0.5 ? 0.08 : 0.88;
 
@@ -30,7 +28,6 @@ class _ProViewfinderOverlayState extends State<ProViewfinderOverlay> {
       _focusPoint = Offset(targetX, targetY);
     });
 
-    // Clear blur after short autofocus delay
     Future.delayed(const Duration(milliseconds: 650), () {
       if (mounted) {
         setState(() {
@@ -48,7 +45,7 @@ class _ProViewfinderOverlayState extends State<ProViewfinderOverlay> {
           onTapDown: (details) => _handleTapToFocus(details, constraints),
           child: Stack(
             children: [
-              // Task A3: Flash Blur Overlay on Tap
+              // Tap Blur Flash
               if (_isBlurring)
                 Positioned.fill(
                   child: BackdropFilter(
@@ -59,7 +56,7 @@ class _ProViewfinderOverlayState extends State<ProViewfinderOverlay> {
                   ),
                 ),
 
-              // Task A1: Rule-of-Thirds Grid Lines
+              // Rule-of-Thirds Grid Lines
               Column(
                 children: [
                   Expanded(
@@ -119,7 +116,7 @@ class _ProViewfinderOverlayState extends State<ProViewfinderOverlay> {
                 ],
               ),
 
-              // Task A3: Anti-Autofocus Reticle
+              // Anti-Autofocus Reticle
               AnimatedPositioned(
                 duration: const Duration(milliseconds: 350),
                 curve: Curves.bounceOut,
@@ -144,7 +141,7 @@ class _ProViewfinderOverlayState extends State<ProViewfinderOverlay> {
                 ),
               ),
 
-              // Task A1: Top Metadata Info
+              // Metadata Display
               Positioned(
                 top: 14,
                 left: 14,
@@ -176,7 +173,7 @@ class _ProViewfinderOverlayState extends State<ProViewfinderOverlay> {
                 ),
               ),
 
-              // Task A1: Simulated Histogram Display (Bottom Right)
+              // Simulated Histogram Display
               Positioned(
                 bottom: 60,
                 right: 14,
@@ -193,7 +190,7 @@ class _ProViewfinderOverlayState extends State<ProViewfinderOverlay> {
                 ),
               ),
 
-              // Task A1: ISO / Shutter Speed Sliders
+              // Controls Sliders
               Positioned(
                 bottom: 10,
                 left: 14,
@@ -245,7 +242,6 @@ class _ProViewfinderOverlayState extends State<ProViewfinderOverlay> {
   }
 }
 
-// Custom Painter for Simulated Live Histogram Graph (Task A1)
 class HistogramPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
@@ -254,11 +250,8 @@ class HistogramPainter extends CustomPainter {
     final Paint paintCyan = Paint()
       ..color = Colors.cyanAccent.withValues(alpha: 0.7);
 
-    final Path pathRed = Path();
-    final Path pathCyan = Path();
-
-    pathRed.moveTo(0, size.height);
-    pathCyan.moveTo(0, size.height);
+    final Path pathRed = Path()..moveTo(0, size.height);
+    final Path pathCyan = Path()..moveTo(0, size.height);
 
     for (double x = 0; x <= size.width; x += 5) {
       double yRed = size.height - (math.sin(x * 0.1) * 12 + 15);
