@@ -30,8 +30,12 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+ feature/ui-gyro
   google_fonts: ^8.2.1
   sensors_plus: ^7.1.0
+  http: ^1.6.0
+  image: ^4.9.2
+ main
 image_picker: ^1.1.2     # For feeding emulator images cleanly
 image: ^4.2.0            # For processing & ruining images programmatically
 sensors_plus: ^5.0.1     # For accelerometer tilt chaos
