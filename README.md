@@ -1,7 +1,11 @@
 Chaos-Cam 🎯
+
 Basic Details
+
 Team Name: useless_project_aura
+
 Team Members
+
 Team Lead: Bisharath K N P - Mar Athanasius College of Engineering, Kothamangalam
 
 Member 2: Devanjana V S - Mar Athanasius College of Engineering, Kothamangalam
